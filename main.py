@@ -1,7 +1,6 @@
 import discord
-import random
 import os
-
+from googlesearch import search
 
 class MyClient(discord.Client):
     async def on_ready(self):
@@ -12,28 +11,19 @@ class MyClient(discord.Client):
         # we do not want the bot to reply to itself
         if message.author.id == self.user.id:
             return
-        channel_id= message.channel.id
-        print(channel_id)
-        if preguntas_enviadas.get(channel_id) is None:
-            preguntas_enviadas[channel_id] = []
 
         if message.content.lower().startswith("!atlas"):
-            while True:
-                pregunta = random.choice(preguntas)
-                if pregunta not in preguntas_enviadas[channel_id]:
-                    preguntas_enviadas[channel_id].append(pregunta)
-                    await message.channel.send(pregunta)
-                    break
+            command, text= message.content.split(" ", 1)
+            resultados= search(f"{text} AND python", num_results=5, advanced=True, lang="es")
 
-                check = [pregunta in preguntas for pregunta in preguntas]
-                if all(check):
-                    preguntas_enviadas[channel_id].clear()
+            for index, resultado in enumerate(resultados):
+                if index==0:
+                    embed=discord.Embed(title=resultado.title, url=resultado.url, description=resultado.description, color=0xFF5733)
+                else:
+                    embed.add_field(name=str(index),value=f"[{resultado.title}]({resultado.url})", inline=False)
 
-
-preguntas_enviadas = {}
-with open("preguntas.txt", "r", encoding="utf-8") as f:
-    preguntas = f.read().splitlines()
-
+            await message.channel.send(embed=embed)
+          
 intents = discord.Intents.default()
 intents.message_content = True
 
